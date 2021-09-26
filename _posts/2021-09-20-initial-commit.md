@@ -2,7 +2,7 @@
 layout: post
 title:  "initial commit"
 date:   2021-09-20 23:33:33 +0300
-permalink: /initial-commit
+permalink: initial-commit
 ---
 
 I've decided to write a blog in the hopes that I can keep more structured notes

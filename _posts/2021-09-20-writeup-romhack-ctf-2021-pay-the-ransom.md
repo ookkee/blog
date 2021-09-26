@@ -2,7 +2,7 @@
 layout: post
 title:  "writeup: RomHack CTF 2021 - Pay the ransom"
 date:   2021-09-27
-permalink: /writeups/romhack-2021-pay-the-ransom
+permalink: writeups/romhack-2021-pay-the-ransom
 ---
 
 This is a writeup for the "Pay the ransom" forensics challenge from RomHack CTF
@@ -29,7 +29,7 @@ an NTLM authentication request. I'm not very familiar with the NTLM protocol, bu
 based on the capture it looks like the attacker is reusing the authentication
 process to impersonate as the victim to the SMB service at 192.168.1.11.
 
-[![HTTP-NTLM-SMB]({{site.path_img}}/writeups/romhack2021-ransom-http-ntlm-smb.png)]({{site.path_img}}/writeups/romhack2021-ransom-http-ntlm-smb.png)
+[![HTTP-NTLM-SMB]({{site.baseurl}}{{site.path_img}}/writeups/romhack2021-ransom-http-ntlm-smb.png)]({{site.baseurl}}{{site.path_img}}/writeups/romhack2021-ransom-http-ntlm-smb.png)
 
 If we look at the SMB traffic we see that the attacker has now authenticated as
 CORP\fcastle. We also see that it is connecting to the \IPC$ share and using
@@ -38,7 +38,7 @@ command execution over SMB, but my guess is it looks something like what we see
 in this capture file. Following the TCP stream related to the SMB traffic we can
 see that there are PowerShell commands being sent to 192.168.1.11.
 
-[![SMB PowerShell]({{site.path_img}}/writeups/romhack2021-ransom-tcp-stream-smb.png)]({{site.path_img}}/writeups/romhack2021-ransom-tcp-stream-smb.png)
+[![SMB PowerShell]({{site.baseurl}}{{site.path_img}}/writeups/romhack2021-ransom-tcp-stream-smb.png)]({{site.baseurl}}{{site.path_img}}/writeups/romhack2021-ransom-tcp-stream-smb.png)
 
 Let's decode that base64-encoded execute.bat:
 
@@ -57,7 +57,7 @@ When looking for _rev.ps1_ and the resulting reverse shell, I noticed that the
 The HTTP request for _rev.ps1_ is in stream 7 and the shell in 8.
 
 [![TCP stream
-browsing]({{site.path_img}}/writeups/romhack2021-ransom-browse-stream.png)]({{site.path_img}}/writeups/romhack2021-ransom-browse-stream.png)
+browsing]({{site.baseurl}}{{site.path_img}}/writeups/romhack2021-ransom-browse-stream.png)]({{site.baseurl}}{{site.path_img}}/writeups/romhack2021-ransom-browse-stream.png)
 
 The reverse shell was doing some basic enumeration of the system and using
 Mimikatz. It also issued the following command:
@@ -80,7 +80,7 @@ receive commands for either RCE or something specific. The most relevant part of
 the program can be seen in the image below:
 
 [![Reverse shell encryption
-command]({{site.path_img}}/writeups/romhack2021-ransom-revshell.png)]({{site.path_img}}/writeups/romhack2021-ransom-revshell.png)
+command]({{site.baseurl}}{{site.path_img}}/writeups/romhack2021-ransom-revshell.png)]({{site.baseurl}}{{site.path_img}}/writeups/romhack2021-ransom-revshell.png)
 
 The function `injran` takes a xor key (`part2` was used as the key) and decrypts
 an Assembly object from the attacker's server. I extracted the the _party.b64_
@@ -91,10 +91,10 @@ for MS Windows` file. Decompiling it in dotPeek reveals some key information
 about how the encryption was done. The images below are the key takeaways.
 
 [![AES assembly object part
-1]({{site.path_img}}/writeups/romhack2021-ransom-aes1.png)]({{site.path_img}}/writeups/romhack2021-ransom-aes1.png)
+1]({{site.baseurl}}{{site.path_img}}/writeups/romhack2021-ransom-aes1.png)]({{site.baseurl}}{{site.path_img}}/writeups/romhack2021-ransom-aes1.png)
 
 [![AES assembly object part
-2]({{site.path_img}}/writeups/romhack2021-ransom-aes2.png)]({{site.path_img}}/writeups/romhack2021-ransom-aes2.png)
+2]({{site.baseurl}}{{site.path_img}}/writeups/romhack2021-ransom-aes2.png)]({{site.baseurl}}{{site.path_img}}/writeups/romhack2021-ransom-aes2.png)
 
 The program creates an AES cipher in CFB mode with blocksize of 128, PKCS7
 padding, a PBKDF2 generated key with 50000 iterations with a randomly generated
@@ -106,7 +106,7 @@ password to generate the key can easily be extracted from the capture file and
 decrypted with the xor key. Below is an image of the decrypted PDF.
 
 [![Invoice
-PDF]({{site.path_img}}/writeups/romhack2021-ransom-invoice-pdf.png)]({{site.path_img}}/writeups/romhack2021-ransom-invoice-pdf.png)
+PDF]({{site.baseurl}}{{site.path_img}}/writeups/romhack2021-ransom-invoice-pdf.png)]({{site.baseurl}}{{site.path_img}}/writeups/romhack2021-ransom-invoice-pdf.png)
 
 We've successfully decrypted the PDF and can most likely decrypt any other files
 the malware might have encrypted. The full flag is:

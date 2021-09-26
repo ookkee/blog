@@ -13,4 +13,4 @@ well, who knows?
 Here's a picture of Whistler from the awesome 1992 movie Sneakers:
 
 [![Too many
-secrets]({{site.path_img}}/whistler.gif)]({{site.path_img}}/whistler.gif)
+secrets]({{site.baseurl}}{{site.path_img}}/whistler.gif)]({{site.baseurl}}{{site.path_img}}/whistler.gif)
