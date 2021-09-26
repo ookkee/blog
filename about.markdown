@@ -1,7 +1,7 @@
 ---
 layout: page
 title: about
-permalink: /about/
+permalink: /about
 ---
 
 Hi, I'm ookkee. I work as a security specialist at Nixu. During my spare time I
@@ -11,4 +11,6 @@ other stuff I've learned. Maybe I'll post about other subjects than hacking/ICT 
 well, who knows?
 
 Here's a picture of Whistler from the awesome 1992 movie Sneakers:
-![Too many secrets]({{site.path_img}}/whistler.gif)
+
+[![Too many
+secrets]({{site.path_img}}/whistler.gif)]({{site.path_img}}/whistler.gif)

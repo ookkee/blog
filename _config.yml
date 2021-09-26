@@ -28,7 +28,8 @@ url: "https://ookkee.github.io" # the base hostname & protocol for your site, e.
 #github_username:  jekyll
 
 # Build settings
-theme: minima
+#theme: minima
+theme: jekyll-theme-hyde
 plugins:
   - jekyll-feed
 
