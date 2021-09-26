@@ -1,11 +1,9 @@
 ---
 layout: post
-title:  "Writeup: RomHack CTF 2021 - Pay the ransom"
-#date:   2021-09-21 TBA
+title:  "writeup: RomHack CTF 2021 - Pay the ransom"
+date:   2021-09-27
 permalink: /writeups/romhack-2021-pay-the-ransom
 ---
-
-# Writeup: RomHack CTF 2021 - Pay the ransom
 
 This is a writeup for the "Pay the ransom" forensics challenge from RomHack CTF
 2021 organized by [HackTheBox](https://www.hackthebox.eu).
@@ -88,9 +86,9 @@ The function `injran` takes a xor key (`part2` was used as the key) and decrypts
 an Assembly object from the attacker's server. I extracted the the _party.b64_
 file from the capture and this time used
 [CyberChef](https://gchq.github.io/CyberChef/) to decode and decrypt the data,
-which turns out to be `PE32+ executable (console) x86-64 Mono/.Net assembly, for
-MS Windows`. Decompiling it in dotPeek reveals some key information about how
-the encryption was done. The images below are the key takeaways.
+which turns out to be a `PE32+ executable (console) x86-64 Mono/.Net assembly,
+for MS Windows` file. Decompiling it in dotPeek reveals some key information
+about how the encryption was done. The images below are the key takeaways.
 
 [![AES assembly object part
 1]({{site.path_img}}/writeups/romhack2021-ransom-aes1.png)]({{site.path_img}}/writeups/romhack2021-ransom-aes1.png)
@@ -103,15 +101,17 @@ padding, a PBKDF2 generated key with 50000 iterations with a randomly generated
 password, and a randomly generated salt. The salt is prepended to the resulting
 encrypted file, and the password is xored with a key (the same xor key). The
 encrypted key is then sent to the attacker's server over HTTP to _/post.php_.
-Those are all the required parameters for encryption and decryption. Below is an
-image of the decrypted PDF.
+Those are all the required parameters for encryption and decryption. The
+password to generate the key can easily be extracted from the capture file and
+decrypted with the xor key. Below is an image of the decrypted PDF.
 
 [![Invoice
 PDF]({{site.path_img}}/writeups/romhack2021-ransom-invoice-pdf.png)]({{site.path_img}}/writeups/romhack2021-ransom-invoice-pdf.png)
 
 We've successfully decrypted the PDF and can most likely decrypt any other files
-the malware might have encrypted. The full flag read
-`HTB{n0t_p4y1ng_th3_r4ns0m_1s_4lw4ys_th3_4nsw3r!!!}`.
+the malware might have encrypted. The full flag is:
+
+`HTB{n0t_p4y1ng_th3_r4ns0m_1s_4lw4ys_th3_4nsw3r!!!}`
 
 ## This didn't really happen
 
